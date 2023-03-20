@@ -1,4 +1,3 @@
-
 package com.xmind;
 
 import com.alibaba.fastjson.JSON;
@@ -16,9 +15,11 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+
 /**
  * @author jiyongshuai
  * @email jysnana@163.com
+ * @updateDate 2023/3/20 21:51
  * */
 public class XmindAnalysis {
 
@@ -32,12 +33,10 @@ public class XmindAnalysis {
 
     private static String sourceFileName = "content.json";
 
+
     static {
         // (*^▽^*)
         File[] xmindFileSourceList = new File("./xfiles/source").listFiles((dir, name) -> name.endsWith(".xmind"));
-        if (xmindFileSourceList == null || xmindFileSourceList.length == 0){
-            throw new RuntimeException("请检查源目录是否存着和源目录下是否有需要解析的Xmind文件...");
-        }
         for (File xmindFileSource : xmindFileSourceList){
             XmindFile xfile = new XmindFile();
             String[] fileNames = xmindFileSource.getName().split("\\.");
@@ -72,39 +71,48 @@ public class XmindAnalysis {
             xfile.setName(fileName.toString());
             xmindJSONToStringList.add(xfile);
         }
+
     }
 
     public static void main(String[] args) {
-        // 开始处理文件
         for (XmindFile xmindFile : xmindJSONToStringList){
             analysisXmindTOResult(xmindFile);
         }
     }
 
-    public static <R, P> void analysisXmindTOResult(XmindFile xmindFile){
+    /**
+     * 解析XMind内容文件，将内容文件转化为格式化的记录
+     * @param xmindFile XMind 文件对象
+     * */
+    public static  <R, P> void analysisXmindTOResult(XmindFile xmindFile){
         JSONArray array = JSON.parseArray(xmindFile.getBody());
         List<XmindStep> resultSteps = new ArrayList<>();
         for (Object o: array){
             XmindFrame<Xmind, R, P> xmindFrame = JSON.parseObject(JSON.toJSONString(o), new TypeReference<XmindFrame<Xmind, R, P>>(){});
             Xmind xmind = xmindFrame.getRootTopic();
             String topicTitle = xmind.getTitle();
-            List<XmindStep> stepList = convertToBaseAction(xmind,new ArrayList<>());
-
-//            String canvasName = xmindFrame.getTitle();
-            // HierarchyState.valueOf("ONE").flag
-//            HierarchyState.getFlag(canvasName);
-
-            List<XmindStep> xmindCanvasSteps = handleSteps(stepList, topicTitle);
+            List<XmindStep> stepList = convertToBaseAction(xmind,new ArrayList<>(), new StringBuilder());
+            // 修剪一下用例标题-美观需求:去除用例标题中的主标题
+            stepList.forEach(step -> {
+                String  title = step.getTitle();
+                if (title.substring(0, topicTitle.length()).equals(topicTitle) && !title.equals(topicTitle)){
+                    title = title.substring(topicTitle.length()+1, title.length());
+                }
+                step.setTitle(title);
+            });
+            List<XmindStep> xmindCanvasSteps = handleXmindSteps(stepList, topicTitle);
             resultSteps.addAll(xmindCanvasSteps);
-            // 优化用例标题的获取方式ing
-            // List<XmindHead> OptimizeTesting = convertToCaseTitle(xmind, new ArrayList<>());
         }
         String fileName = "./xfiles/target/" + xmindFile.getName();
         toFile(resultSteps, fileName);
-
     }
 
-    public static List<XmindStep> handleSteps(List<XmindStep> stepList, String topicTitle){
+    /**
+     * 最初的处理方式，用于处理 convertToBaseAction(Xmind xmind, List<XmindStep> steps) 方法计算出来的数据集合
+     * 当前有了更好的计算方式可以把基础数据集合算的更加准确。
+     * */
+    @Deprecated
+    private static List<XmindStep> handleSteps(List<XmindStep> stepList, String topicTitle){
 
         for (int i = 0; i < stepList.size(); i++){
             stepList.get(i).setSort(i);
@@ -165,7 +173,7 @@ public class XmindAnalysis {
         }
 
         // 如果全路径（路径+标题）是一样的就认为是一条测试用例 按要求将步骤合并为用例（具体区分用例在业务端猜测是用CaseId区分）
-        Map<String, List<XmindStep>> tmepCase = sourceXmindStep.stream().filter(step->step.getTitle() != null).collect(Collectors.groupingBy(XmindStep::getTitle));
+        Map<String, List<XmindStep>> tmepCase = sourceXmindStep.stream().collect(Collectors.groupingBy(XmindStep::getTitle));
         TreeMap sortTmepCase = new TreeMap(tmepCase);
         Iterator<Map.Entry<String, List<XmindStep>>> varIterator = sortTmepCase.entrySet().iterator();
 
@@ -209,7 +217,61 @@ public class XmindAnalysis {
 
     }
 
-    public static void toFile(List<XmindStep> steps, String fileName){
+    /**
+     * 基础步骤的格式化 给需要的属性赋值
+     * @param stepList 基础数据源
+     * @param topicTitle 画布主题
+     * @return  格式化基准步骤
+     * */
+    private static List<XmindStep> handleXmindSteps(List<XmindStep> stepList, String topicTitle){
+        Map<String, List<XmindStep>> mapStep = stepList.stream().collect(Collectors.groupingBy(XmindStep::getTitle));
+        TreeMap stepSortMap = new TreeMap(mapStep);
+        Iterator<Map.Entry<String, List<XmindStep>>> stepIterator = stepSortMap.entrySet().iterator();
+        // setCaseId
+        int tmepNum = 0;
+        while (stepIterator.hasNext()){
+            tmepNum+=1;
+            Map.Entry<String, List<XmindStep>> next = stepIterator.next();
+            for (XmindStep xmindStep : next.getValue()){
+                xmindStep.setCaseId(tmepNum);
+            }
+        }
+
+        // 格式化用例步骤 提供业务需要的用例格式
+        List<XmindStep> formatSteps = new ArrayList<>();
+        mapStep.values().forEach(steps -> {
+            steps.forEach(stept->{
+                String[] titles = stept.getTitle().split("-");
+                if (titles.length < hierarchy){
+                    try {
+                        throw new Exception();
+                    } catch (Exception e) {
+                        e.printStackTrace(System.out.append("实际Xmind层级少于预期层级,请检查Xmind文件层级与hierarchy是否相符"));
+                    }
+                }
+                StringBuilder s = new StringBuilder(topicTitle);
+                for (int i = 0; i < hierarchy; i++){
+                    s.append(xpathSeparator).append(titles[i]);
+                }
+                String resultPath = s.toString();
+                // 通过冒烟标识确定冒烟用例
+                if (stept.getTitle().contains(smokingFlag)){
+                    stept.setPriority("P0");
+                }
+                stept.setPath(resultPath);
+                formatSteps.add(stept);
+            });
+        });
+        List<XmindStep> resultSteps = formatSteps.stream().sorted(Comparator.comparing(XmindStep::getCaseId)).collect(Collectors.toList());
+        return resultSteps;
+    }
+
+    /**
+     * 将内容写入文件
+     * @param steps 数据源
+     * @param fileName 文件名称
+     * */
+    private static void toFile(List<XmindStep> steps, String fileName){
         String firstLine = XrayCase.getFormatNames() + System.getProperty("line.separator");
         try {
             FileUtils.writeStringToFile(new File(fileName), firstLine, "UTF-8");
@@ -224,12 +286,61 @@ public class XmindAnalysis {
         }
     }
 
+
+    /**
+     * 进一步优化，获取步骤后先获取title再循环：
+     * @param xmind Xmind 起始对象程序解析的数据源
+     * @param steps Xmind 步骤集合，程序存储的结果极氪
+     * @param builders 用于步骤间标题的传递
+     * @return 将XMind转为以步骤为基准的记录
+     * */
+    private static List<XmindStep> convertToBaseAction(Xmind xmind, List<XmindStep> steps, StringBuilder builders){
+        List<Xmind> xmindList = xmind.getChildren().getAttached();
+        XmindStep step = new XmindStep();
+        builders.append(xmind.getTitle()).append("-");
+        StringBuilder sb = new StringBuilder();
+
+        boolean flag = true;
+        for (Xmind var: xmindList){
+            if (var.getChildren() != null){
+                convertToBaseAction(var, steps, builders);
+            }else {
+                sb.append(var.getTitle());
+                if (flag){
+                    builders.replace(builders.length() - (xmind.getTitle().length() + 1), builders.length(),"");
+                    flag = false;
+                }
+            }
+        }
+
+        if (sb.toString().length() > 0){
+            steps.add(step);
+            step.setStep(xmind.getTitle());
+            step.setExpectedResult(sb.toString());
+            try {
+                step.setTitle(builders.substring(0, builders.length()-1));
+            }catch (Exception e){
+                throw new RuntimeException("请检查每条记录的层级是否足够，每条记录至少要保证三个节点");
+            }
+
+        }else {
+            // 值得比较的内容-优化：只对用例标题内容进行比较
+            if (builders.length() > xmind.getTitle().length() && xmind.getTitle().equals(builders.substring(builders.length() - (xmind.getTitle().length() + 1), builders.length()-1))){
+                builders.replace(builders.length() - (xmind.getTitle().length() + 1), builders.length(),"");
+            }
+        }
+
+        return steps;
+    }
+
+
     /**
      * @param xmind Xmind 对象
      * @param steps Xmind 步骤集合
      * @return 将XMind转为以步骤为基准的记录
      * */
-    public static List<XmindStep> convertToBaseAction(Xmind xmind, List<XmindStep> steps){
+    @Deprecated
+    private static List<XmindStep> convertToBaseAction(Xmind xmind, List<XmindStep> steps){
         List<Xmind> xmindList = xmind.getChildren().getAttached();
         XmindStep step = new XmindStep();
         StringBuilder sb = new StringBuilder();
@@ -251,64 +362,117 @@ public class XmindAnalysis {
         return steps;
     }
 
+
     /**
      * 优化获取Title
      * */
-    public static List<XmindHead> convertToCaseTitle(Xmind xmind, List<XmindHead> titles){
-        List<Xmind> xmindList = xmind.getChildren().getAttached();
-        String uuid = UUID.randomUUID().toString().replace("-", "");
-        StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append(xmind.getTitle());
-        // 每个循环是一层
-        for (Xmind xm: xmindList){
-            XmindHead head = new XmindHead();
-            titles.add(head);
-            head.setTitle(stringBuilder.toString());
-
-            if (xm.getChildren() != null){
-                stringBuilder.append(xm.getTitle());
-                head.setTitle(stringBuilder.toString());
-                List<Xmind> list = xm.getChildren().getAttached();
-                boolean flag = true;
-                for (Xmind x: list){
-                    if (x.getChildren() != null){
-                        convertToCaseTitle(x, titles);
-                    }else {
-                        if (flag){
-                            titles.remove(titles.size()-1);
-                            flag = false;
-                            break;
-                        }
-                    }
-                }
-            }
-            // TODO
-        }
-        return titles;
-    }
-
-    public static List<XmindHead> convertToCaseTitleTest(Xmind xmind, List<XmindHead> titles){
+    @Deprecated
+    private static List<XmindHead> convertToCaseTitleTest(Xmind xmind, List<XmindHead> titles, StringBuilder builders){
         List<Xmind> xmindList = xmind.getChildren().getAttached();
         XmindHead head = new XmindHead();
-        head.setTitle(xmind.getTitle());
-        titles.add(head);
+        builders.append(xmind.getTitle()).append("-");
         boolean flag = true;
         // 每个循环是一层
         for (Xmind x: xmindList){
             if (x.getChildren() != null){
-                convertToCaseTitleTest(x, titles);
+                convertToCaseTitleTest(x, titles, builders);
             }else {
                 if (flag){
-                    titles.remove(titles.size()-1);
+                    // 用例处理完了
+                    builders.replace(builders.length() - (xmind.getTitle().length() + 1), builders.length(),"");
                     flag = false;
-                    break;
                 }
             }
+        }
+
+        head.setTitle(builders.substring(0, builders.length()-1));
+        titles.add(head);
+        // 值得比较的内容
+        if (builders.length() > xmind.getTitle().length() && xmind.getTitle().equals(builders.substring(builders.length() - (xmind.getTitle().length() + 1), builders.length()-1))){
+            builders.replace(builders.length() - (xmind.getTitle().length() + 1), builders.length(),"");
         }
         return titles;
     }
 
+    /**
+     * 尝试优化步骤的获取功能
+     * */
+    @Deprecated
+    private static List<XmindStep> convertToBaseActionTest(Xmind xmind, List<XmindStep> steps, StringBuilder builders){
+        List<Xmind> xmindList = xmind.getChildren().getAttached();
+        XmindStep step = new XmindStep();
+        builders.append(xmind.getTitle()).append("-");
+        StringBuilder sb = new StringBuilder();
+
+        boolean flag = true;
+        for (Xmind var: xmindList){
+            if (var.getChildren() != null){
+                convertToBaseActionTest(var, steps, builders);
+            }else {
+                sb.append(var.getTitle());
+                if (flag){
+                    builders.replace(builders.length() - (xmind.getTitle().length() + 1), builders.length(),"");
+                    flag = false;
+                }
+            }
+        }
+
+        steps.add(step);
+        if (sb.toString().length() > 0){
+            step.setStep(xmind.getTitle());
+            step.setExpectedResult(sb.toString());
+        }else {
+            step.setTitle(builders.substring(0, builders.length()-1));
+        }
+
+        // 值得比较的内容
+        if (builders.length() > xmind.getTitle().length() && xmind.getTitle().equals(builders.substring(builders.length() - (xmind.getTitle().length() + 1), builders.length()-1))){
+            builders.replace(builders.length() - (xmind.getTitle().length() + 1), builders.length(),"");
+        }
+        return steps;
+    }
+
+
+    /**
+     * 优化获取用例title
+     * */
+    /**
+     public static  <R, P> void analysisXmindTOResultTest(XmindFile xmindFile){
+     JSONArray array = JSON.parseArray(xmindFile.getBody());
+     List<XmindStep> resultSteps = new ArrayList<>();
+     for (Object o: array){
+     XmindFrame<Xmind, R, P> xmindFrame = JSON.parseObject(JSON.toJSONString(o), new TypeReference<XmindFrame<Xmind, R, P>>(){});
+     Xmind xmind = xmindFrame.getRootTopic();
+     String topicTitle = xmind.getTitle();
+
+     // 尝试优化基础步骤
+     List<XmindStep> stepList = convertToBaseAction(xmind,new ArrayList<>(), new StringBuilder());
+     List<XmindStep> xmindCanvasSteps = handleXmindSteps(stepList, topicTitle);
+     resultSteps.addAll(xmindCanvasSteps);
+
+     Map<String, List<XmindStep>> mapSteps = stepList.stream().collect(Collectors.groupingBy(XmindStep::getTitle));
+
+     // 优化用例标题的获取方式ing
+     List<XmindHead> OptimizeTesting = convertToCaseTitleTest(xmind, new ArrayList<>(), new StringBuilder());
+     Map<String, List<XmindHead>> MapOptimizeTesting = OptimizeTesting.stream().collect(Collectors.groupingBy(XmindHead::getTitle));
+     List<XmindHead> lh = new ArrayList<>();
+     for(List<XmindHead> s : MapOptimizeTesting.values()){
+     lh.add(s.get(0));
+     }
+     lh = lh.stream().sorted(Comparator.comparing(XmindHead::getTitle)).collect(Collectors.toList());
+     List<XmindHead> finalLh = lh;
+     lh = lh.stream().filter(x->{
+     for (XmindHead head: finalLh){
+     if (head.getTitle().contains(x.getTitle()) && !head.getTitle().equals(x.getTitle())){
+     return false;
+     }
+     }
+     return true;
+     }).collect(Collectors.toList());
+     lh = lh.stream().sorted(Comparator.comparing(XmindHead::getTitle)).collect(Collectors.toList());
+     System.out.println(lh);
+     }
+     }
+     */
+
 }
-
-
-
