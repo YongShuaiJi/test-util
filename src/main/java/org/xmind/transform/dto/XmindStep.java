@@ -1,4 +1,4 @@
-package com.xmind;
+package org.xmind.transform.dto;
 
 import lombok.Getter;
 import lombok.Setter;

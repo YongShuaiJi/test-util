@@ -1,7 +1,8 @@
-package com.xmind;
+package org.xmind.transform.dto;
+
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
+
 import java.util.List;
 
 /**
@@ -10,7 +11,7 @@ import java.util.List;
  * */
 @Getter
 @Setter
-@ToString
-public class TreeNode {
-    private List<Xmind> attached;
+public class XmindCase {
+    private String caseTitle;
+    private List<XmindStep> action;
 }

@@ -1,4 +1,4 @@
-package com.xmind;
+package org.xmind.transform.enums;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -7,18 +7,26 @@ import java.util.List;
  * @author jiyongshuai
  * @email jysnana@163.com
  * */
+/**
+ * hierarchy 为主题之下几层子主题，对应主目录下几层子目录
+ * */
 public enum HierarchyState {
+
     ONE(1, "one"),
     TWO(2, "two"),
     THREE(3, "three"),
     FOUR(4, "four"),
     Five(5,"five"),
     SIX(6, "six"),
-    SEVEN(7,"seven");
-    private int flag;
+    SEVEN(7,"seven"),
+    DEFAULT(2,"default");
+
+    private int code;
+
     private String name;
-    HierarchyState(int flag, String name){
-        this.flag = flag;
+
+    HierarchyState(int code, String name){
+        this.code = code;
         this.name = name;
     }
 
@@ -29,12 +37,15 @@ public enum HierarchyState {
         }
         return names;
     }
-    public static List<String> getFlag(String name){
-        List<String> names = new ArrayList<>();
-        for (HierarchyState hierarchy : HierarchyState.values()){
-            names.add(hierarchy.name);
-        }
-        return names;
-    }
-}
 
+    public static int getCode(String name){
+        // 默认固定两层
+        for (HierarchyState state: HierarchyState.values()){
+            if (state.name.equals(name)){
+                return state.code;
+            }
+        }
+        return HierarchyState.valueOf("DEFAULT").code;
+    }
+
+}

@@ -1,7 +1,9 @@
-package com.xmind;
+package org.xmind.transform.dto;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.xmind.transform.dto.TreeNode;
+
 import java.math.BigDecimal;
 
 /**

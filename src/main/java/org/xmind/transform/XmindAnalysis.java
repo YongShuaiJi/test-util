@@ -1,11 +1,14 @@
-package com.xmind;
+package org.xmind.transform;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.xmind.transform.dto.*;
+import org.xmind.transform.enums.HierarchyState;
+import org.xmind.transform.enums.XrayCase;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -20,7 +23,9 @@ import java.util.zip.ZipFile;
  * @author jiyongshuai
  * @email jysnana@163.com
  * @updateDate 2023/3/20 21:51
+ * 原始的类已弃用的类不在更新，用其他类重新实现此功能
  * */
+@Deprecated
 public class XmindAnalysis {
 
     public static List<XmindFile> xmindJSONToStringList = new ArrayList<>();
@@ -29,7 +34,7 @@ public class XmindAnalysis {
 
     private static String xpathSeparator = "/"; // 目录之间连接符
 
-    private static final int hierarchy = 2; // 默认固定两层,需要时调整， hierarchy 为主题之下几层子主题，对应主目录下几层子目录
+//    private static final int hierarchy = 2; // 默认固定两层,需要时调整， hierarchy 为主题之下几层子主题，对应主目录下几层子目录
 
     private static String sourceFileName = "content.json";
 
@@ -84,11 +89,11 @@ public class XmindAnalysis {
      * 解析XMind内容文件，将内容文件转化为格式化的记录
      * @param xmindFile XMind 文件对象
      * */
-    public static  <R, P> void analysisXmindTOResult(XmindFile xmindFile){
-        JSONArray array = JSON.parseArray(xmindFile.getBody());
+    public static <R, P> void analysisXmindTOResult(XmindFile xmindFile){
+        List<JSONObject> array = JSON.parseArray(xmindFile.getBody(), JSONObject.class);
         List<XmindStep> resultSteps = new ArrayList<>();
-        for (Object o: array){
-            XmindFrame<Xmind, R, P> xmindFrame = JSON.parseObject(JSON.toJSONString(o), new TypeReference<XmindFrame<Xmind, R, P>>(){});
+        for (JSONObject o: array){
+            XmindFrame<Xmind, R, P> xmindFrame = JSON.parseObject(o.toString(), new TypeReference<XmindFrame<Xmind, R, P>>(){});
             Xmind xmind = xmindFrame.getRootTopic();
             String topicTitle = xmind.getTitle();
             List<XmindStep> stepList = convertToBaseAction(xmind,new ArrayList<>(), new StringBuilder());
@@ -100,7 +105,9 @@ public class XmindAnalysis {
                 }
                 step.setTitle(title);
             });
-            List<XmindStep> xmindCanvasSteps = handleXmindSteps(stepList, topicTitle);
+            // hierarchy 层级赋值每个画布不一样
+            int hierarchy = HierarchyState.getCode(xmindFrame.getTitle());
+            List<XmindStep> xmindCanvasSteps = handleXmindSteps(stepList, topicTitle, hierarchy);
             resultSteps.addAll(xmindCanvasSteps);
         }
         String fileName = "./xfiles/target/" + xmindFile.getName();
@@ -112,7 +119,7 @@ public class XmindAnalysis {
      * 当前有了更好的计算方式可以把基础数据集合算的更加准确。
      * */
     @Deprecated
-    private static List<XmindStep> handleSteps(List<XmindStep> stepList, String topicTitle){
+    private static List<XmindStep> handleSteps(List<XmindStep> stepList, String topicTitle, int hierarchy){
 
         for (int i = 0; i < stepList.size(); i++){
             stepList.get(i).setSort(i);
@@ -223,7 +230,7 @@ public class XmindAnalysis {
      * @param topicTitle 画布主题
      * @return  格式化基准步骤
      * */
-    private static List<XmindStep> handleXmindSteps(List<XmindStep> stepList, String topicTitle){
+    private static List<XmindStep> handleXmindSteps(List<XmindStep> stepList, String topicTitle, int hierarchy){
         Map<String, List<XmindStep>> mapStep = stepList.stream().collect(Collectors.groupingBy(XmindStep::getTitle));
         TreeMap stepSortMap = new TreeMap(mapStep);
         Iterator<Map.Entry<String, List<XmindStep>>> stepIterator = stepSortMap.entrySet().iterator();
@@ -236,7 +243,6 @@ public class XmindAnalysis {
                 xmindStep.setCaseId(tmepNum);
             }
         }
-
         // 格式化用例步骤 提供业务需要的用例格式
         List<XmindStep> formatSteps = new ArrayList<>();
         mapStep.values().forEach(steps -> {
@@ -444,14 +450,11 @@ public class XmindAnalysis {
      XmindFrame<Xmind, R, P> xmindFrame = JSON.parseObject(JSON.toJSONString(o), new TypeReference<XmindFrame<Xmind, R, P>>(){});
      Xmind xmind = xmindFrame.getRootTopic();
      String topicTitle = xmind.getTitle();
-
      // 尝试优化基础步骤
      List<XmindStep> stepList = convertToBaseAction(xmind,new ArrayList<>(), new StringBuilder());
      List<XmindStep> xmindCanvasSteps = handleXmindSteps(stepList, topicTitle);
      resultSteps.addAll(xmindCanvasSteps);
-
      Map<String, List<XmindStep>> mapSteps = stepList.stream().collect(Collectors.groupingBy(XmindStep::getTitle));
-
      // 优化用例标题的获取方式ing
      List<XmindHead> OptimizeTesting = convertToCaseTitleTest(xmind, new ArrayList<>(), new StringBuilder());
      Map<String, List<XmindHead>> MapOptimizeTesting = OptimizeTesting.stream().collect(Collectors.groupingBy(XmindHead::getTitle));
