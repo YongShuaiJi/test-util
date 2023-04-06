@@ -1,5 +1,6 @@
 package org.xmind.transform;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 /**
@@ -10,5 +11,13 @@ import org.junit.Test;
 public class XmindTransformTest {
 
     @Test
-    public void testXmindTransform(){}
+    public void testXmindTransform(){
+        String s = "abcabcbb";
+        String temp  = "";
+        for(int i = 0; i < s.length(); i++){
+            // s[i]
+
+        }
+
+    }
 }
