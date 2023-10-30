@@ -4,6 +4,7 @@ import org.xmind.transform.dto.Xmind;
 import org.xmind.transform.dto.XmindStep;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * @author jiyongshuai
@@ -22,7 +23,7 @@ public class AnalysisCore {
     public List<XmindStep> convertToBaseAction(Xmind xmind, List<XmindStep> steps, StringBuilder builders){
         List<Xmind> xmindList = xmind.getChildren().getAttached();
         XmindStep step = new XmindStep();
-        builders.append(xmind.getTitle()).append("-");
+        builders.append(Optional.ofNullable(xmind.getTitle()).orElse("")).append("-");
         StringBuilder sb = new StringBuilder();
         boolean flag = true;
         for (Xmind var: xmindList){
@@ -30,15 +31,16 @@ public class AnalysisCore {
                 convertToBaseAction(var, steps, builders);
             }else {
                 sb.append(var.getTitle());
+                sb.append(System.getProperty("line.separator")); // 优化：预期结果换行
                 if (flag){
-                    builders.replace(builders.length() - (xmind.getTitle().length() + 1), builders.length(),"");
+                    builders.replace(builders.length() - (Optional.ofNullable(xmind.getTitle()).orElse("").length() + 1), builders.length(),"");
                     flag = false;
                 }
             }
         }
-        if (sb.toString().length() > 0){
+        if (!sb.toString().isEmpty()){
             steps.add(step);
-            step.setStep(xmind.getTitle());
+            step.setStep(Optional.ofNullable(xmind.getTitle()).orElse(""));
             step.setExpectedResult(sb.toString());
             try {
                 step.setTitle(builders.substring(0, builders.length()-1));
@@ -47,8 +49,9 @@ public class AnalysisCore {
             }
         }else {
             // 值得比较的内容-优化：只对用例标题内容进行比较
-            if (builders.length() > xmind.getTitle().length() && xmind.getTitle().equals(builders.substring(builders.length() - (xmind.getTitle().length() + 1), builders.length()-1))){
-                builders.replace(builders.length() - (xmind.getTitle().length() + 1), builders.length(),"");
+            if (builders.length() > Optional.ofNullable(xmind.getTitle()).orElse("").length()
+                    && Optional.ofNullable(xmind.getTitle()).orElse("").equals(builders.substring(builders.length() - (Optional.ofNullable(xmind.getTitle()).orElse("").length() + 1), builders.length()-1))){
+                builders.replace(builders.length() - (Optional.ofNullable(xmind.getTitle()).orElse("").length() + 1), builders.length(),"");
             }
         }
 

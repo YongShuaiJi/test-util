@@ -7,6 +7,7 @@ import org.apache.commons.io.FileUtils;
 import org.xmind.transform.config.baseConfig;
 import org.xmind.transform.enums.HierarchyState;
 import org.xmind.transform.dto.XmindStep;
+import org.xmind.transform.enums.Priority;
 import org.xmind.transform.enums.XrayCase;
 import org.xmind.transform.dto.Xmind;
 import org.xmind.transform.dto.XmindFile;
@@ -93,6 +94,30 @@ public class XmindToCSVExport<R, P> extends baseConfig implements XmindExportStr
                 if (stept.getTitle().contains(smokingFlag)){
                     stept.setPriority("P0");
                 }
+                // 识别用例优先级
+                for (String priorityKey : Priority.getKeys()){
+                    if (stept.getTitle().contains(priorityKey)){
+                        stept.setTitle(stept.getTitle().replace(priorityKey, ""));
+                        stept.setPriority(priorityKey);
+                    }
+                }
+                // 去除因为空元素块带来的 -
+                String[] target = stept.getTitle().split("-");
+                String targe = "";
+                for (String title : target){
+                    if (!title.isEmpty()){
+                        targe = targe + title + '-';
+                    }
+                }
+                targe = targe.substring(0, targe.length()-1);
+                stept.setTitle(targe);
+
+
+
+
+
+
+
                 stept.setPath(resultPath);
                 formatSteps.add(stept);
             });
