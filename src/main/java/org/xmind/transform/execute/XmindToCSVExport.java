@@ -111,13 +111,6 @@ public class XmindToCSVExport<R, P> extends baseConfig implements XmindExportStr
                 }
                 targe = targe.substring(0, targe.length()-1);
                 stept.setTitle(targe);
-
-
-
-
-
-
-
                 stept.setPath(resultPath);
                 formatSteps.add(stept);
             });
