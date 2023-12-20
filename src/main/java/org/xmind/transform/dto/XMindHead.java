@@ -7,7 +7,7 @@ import lombok.Data;
  * @email jysnana@163.com
  * */
 @Data
-public class XmindHead {
+public class XMindHead {
     private String flagTitle;
     private String title;
     private int flag = 0;

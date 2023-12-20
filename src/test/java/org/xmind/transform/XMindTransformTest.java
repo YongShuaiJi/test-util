@@ -8,7 +8,7 @@ import org.junit.Test;
  * @email jysnana@163.com
  * @Date 2023/03/31 00:49:01
  */
-public class XmindTransformTest {
+public class XMindTransformTest {
 
     @Test
     public void testXmindTransform(){

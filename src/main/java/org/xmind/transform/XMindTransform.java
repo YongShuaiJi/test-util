@@ -1,9 +1,9 @@
 package org.xmind.transform;
 
 import org.apache.commons.io.IOUtils;
-import org.xmind.transform.dto.XmindFile;
-import org.xmind.transform.execute.XmindExportStrategy;
-import org.xmind.transform.execute.XmindToCSVExport;
+import org.xmind.transform.dto.XMindFile;
+import org.xmind.transform.execute.XMindExportStrategy;
+import org.xmind.transform.execute.XMindToCSVExport;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -18,17 +18,17 @@ import java.util.zip.ZipFile;
  * @email jysnana@163.com
  * @createDate 2023/3/22
  * */
-public class XmindTransform {
-    public static List<XmindFile> xmindJSONToStringList = new ArrayList<>();
+public class XMindTransform {
+    public static List<XMindFile> xmindJSONToStringList = new ArrayList<>();
     private static final String sourceFileName = "content.json"; // 标准的XMind内容文件
-    private static Map<String, XmindExportStrategy> xmindExportStrategyMap = new HashMap<>();
+    private static Map<String, XMindExportStrategy> xmindExportStrategyMap = new HashMap<>();
 
     static {
-        xmindExportStrategyMap.put("csv", new XmindToCSVExport());
+        xmindExportStrategyMap.put("csv", new XMindToCSVExport());
         // (*^▽^*)
         File[] xmindFileSourceList = new File("./xfiles/source").listFiles((dir, name) -> name.endsWith(".xmind"));
         for (File xmindFileSource : xmindFileSourceList){
-            XmindFile xfile = new XmindFile();
+            XMindFile xfile = new XMindFile();
             String[] fileNames = xmindFileSource.getName().split("\\.");
             fileNames = Arrays.copyOf(fileNames, fileNames.length-1);
             StringBuilder fileName = new StringBuilder();
@@ -65,7 +65,7 @@ public class XmindTransform {
     }
 
     public static void main(String[] args) {
-        for (XmindFile xmindFile : xmindJSONToStringList){
+        for (XMindFile xmindFile : xmindJSONToStringList){
             xmindExportStrategyMap.get("csv").execute(xmindFile);
         }
 

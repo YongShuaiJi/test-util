@@ -6,12 +6,12 @@ import com.alibaba.fastjson.TypeReference;
 import org.apache.commons.io.FileUtils;
 import org.xmind.transform.config.baseConfig;
 import org.xmind.transform.enums.HierarchyState;
-import org.xmind.transform.dto.XmindStep;
+import org.xmind.transform.dto.XMindStep;
 import org.xmind.transform.enums.Priority;
 import org.xmind.transform.enums.XrayCase;
-import org.xmind.transform.dto.Xmind;
-import org.xmind.transform.dto.XmindFile;
-import org.xmind.transform.dto.XmindFrame;
+import org.xmind.transform.dto.XMind;
+import org.xmind.transform.dto.XMindFile;
+import org.xmind.transform.dto.XMindFrame;
 
 import java.io.File;
 import java.io.IOException;
@@ -24,18 +24,18 @@ import java.util.stream.Collectors;
  * @email jysnana@163.com
  * @Date 2023/3/22
  */
-public class XmindToCSVExport<R, P> extends baseConfig implements XmindExportStrategy<XmindFile> {
+public class XMindToCSVExport<R, P> extends baseConfig implements XMindExportStrategy<XMindFile> {
 
     private AnalysisCore analysisCore = new AnalysisCore();
 
     @Override
-    public void execute(XmindFile xmindFile) {
+    public void execute(XMindFile xmindFile) {
         List<JSONObject> array = JSON.parseArray(xmindFile.getBody(), JSONObject.class);
-        List<XmindStep> resultSteps = new ArrayList<>();
+        List<XMindStep> resultSteps = new ArrayList<>();
         for (JSONObject o: array){
-            XmindFrame<Xmind, R, P> xmindFrame = JSON.parseObject(o.toString(), new TypeReference<XmindFrame<Xmind, R, P>>(){});
-            Xmind xmind = xmindFrame.getRootTopic();
-            List<XmindStep> stepList = analysisCore.convertToBaseAction(xmind, new ArrayList<>(), new StringBuilder());
+            XMindFrame<XMind, R, P> xmindFrame = JSON.parseObject(o.toString(), new TypeReference<XMindFrame<XMind, R, P>>(){});
+            XMind xmind = xmindFrame.getRootTopic();
+            List<XMindStep> stepList = analysisCore.convertToBaseAction(xmind, new ArrayList<>(), new StringBuilder());
             String topicTitle = xmind.getTitle();
             // 修剪一下用例标题-美观需求:去除用例标题中的主标题
             stepList.forEach(step -> {
@@ -47,7 +47,7 @@ public class XmindToCSVExport<R, P> extends baseConfig implements XmindExportStr
             });
             // hierarchy 层级赋值每个画布不一样
             int hierarchy = HierarchyState.getCode(xmindFrame.getTitle());
-            List<XmindStep> xmindCanvasSteps = handleXmindSteps(stepList, topicTitle, hierarchy);
+            List<XMindStep> xmindCanvasSteps = handleXmindSteps(stepList, topicTitle, hierarchy);
             resultSteps.addAll(xmindCanvasSteps);
         }
         String fileName = targetPath + xmindFile.getName();
@@ -60,21 +60,21 @@ public class XmindToCSVExport<R, P> extends baseConfig implements XmindExportStr
      * @param topicTitle 画布主题
      * @return  格式化基准步骤
      * */
-    private List<XmindStep> handleXmindSteps(List<XmindStep> stepList, String topicTitle, int hierarchy){
-        Map<String, List<XmindStep>> mapStep = stepList.stream().collect(Collectors.groupingBy(XmindStep::getTitle));
+    private List<XMindStep> handleXmindSteps(List<XMindStep> stepList, String topicTitle, int hierarchy){
+        Map<String, List<XMindStep>> mapStep = stepList.stream().collect(Collectors.groupingBy(XMindStep::getTitle));
         TreeMap stepSortMap = new TreeMap(mapStep);
-        Iterator<Map.Entry<String, List<XmindStep>>> stepIterator = stepSortMap.entrySet().iterator();
+        Iterator<Map.Entry<String, List<XMindStep>>> stepIterator = stepSortMap.entrySet().iterator();
         // setCaseId
         int tmepNum = 0;
         while (stepIterator.hasNext()){
             tmepNum+=1;
-            Map.Entry<String, List<XmindStep>> next = stepIterator.next();
-            for (XmindStep xmindStep : next.getValue()){
+            Map.Entry<String, List<XMindStep>> next = stepIterator.next();
+            for (XMindStep xmindStep : next.getValue()){
                 xmindStep.setCaseId(tmepNum);
             }
         }
         // 格式化用例步骤 提供业务需要的用例格式
-        List<XmindStep> formatSteps = new ArrayList<>();
+        List<XMindStep> formatSteps = new ArrayList<>();
         mapStep.values().forEach(steps -> {
             steps.forEach(stept->{
                 String[] titles = stept.getTitle().split("-");
@@ -115,7 +115,7 @@ public class XmindToCSVExport<R, P> extends baseConfig implements XmindExportStr
                 formatSteps.add(stept);
             });
         });
-        List<XmindStep> resultSteps = formatSteps.stream().sorted(Comparator.comparing(XmindStep::getCaseId)).collect(Collectors.toList());
+        List<XMindStep> resultSteps = formatSteps.stream().sorted(Comparator.comparing(XMindStep::getCaseId)).collect(Collectors.toList());
         return resultSteps;
     }
 
@@ -124,7 +124,7 @@ public class XmindToCSVExport<R, P> extends baseConfig implements XmindExportStr
      * @param steps 数据源
      * @param fileName 文件名称
      * */
-    private void toFile(List<XmindStep> steps, String fileName){
+    private void toFile(List<XMindStep> steps, String fileName){
         String firstLine = XrayCase.getFormatNames() + System.getProperty("line.separator");
         try {
             FileUtils.writeStringToFile(new File(fileName), firstLine, "UTF-8");
@@ -134,7 +134,7 @@ public class XmindToCSVExport<R, P> extends baseConfig implements XmindExportStr
         }
         // 调试的代码
 //        System.out.print(firstLine);
-//        for (XmindStep s: steps){
+//        for (XMindStep s: steps){
 //            System.out.println(s);
 //        }
     }

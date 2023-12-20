@@ -13,5 +13,5 @@ import java.util.List;
 @Setter
 @ToString
 public class TreeNode {
-    private List<Xmind> attached;
+    private List<XMind> attached;
 }

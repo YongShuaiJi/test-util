@@ -1,10 +1,9 @@
 package org.xmind.transform.dto;
+
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
-import org.xmind.transform.dto.TreeNode;
-
-import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * @author jiyongshuai
@@ -13,12 +12,13 @@ import java.math.BigDecimal;
 @Getter
 @Setter
 @ToString
-public class Xmind {
+public class XMindFrame<T, R, P> {
     private String id;
     private String clazz;
     private String title;
-    private String structureClass;
-    private TreeNode children;
-    private BigDecimal customWidth;
-    private String branch;
+    private T rootTopic;
+    private List<R> extensions;
+    private P theme;
+    private String topicPositioning;
+    private String coreVersion;
 }

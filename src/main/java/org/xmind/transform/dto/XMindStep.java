@@ -12,7 +12,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-public class XmindStep {
+public class XMindStep {
     private int caseId;
     private String title;
     private String priority = "P1";

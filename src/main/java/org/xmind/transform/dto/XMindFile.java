@@ -1,9 +1,6 @@
 package org.xmind.transform.dto;
-
 import lombok.Getter;
 import lombok.Setter;
-
-import java.util.List;
 
 /**
  * @author jiyongshuai
@@ -11,7 +8,8 @@ import java.util.List;
  * */
 @Getter
 @Setter
-public class XmindCase {
-    private String caseTitle;
-    private List<XmindStep> action;
+public class XMindFile {
+    private String name;
+    private String body;
 }
+

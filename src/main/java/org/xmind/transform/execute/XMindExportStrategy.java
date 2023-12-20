@@ -6,7 +6,7 @@ package org.xmind.transform.execute;
  * @Date 2023/3/22
  */
 @FunctionalInterface
-public interface XmindExportStrategy<E> {
+public interface XMindExportStrategy<E> {
 
     void execute(E e);
 }
