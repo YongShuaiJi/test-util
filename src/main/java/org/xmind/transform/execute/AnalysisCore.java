@@ -23,9 +23,7 @@ public class AnalysisCore {
     public List<XMindStep> convertToBaseAction(XMind xmind, List<XMindStep> steps, StringBuilder builders){
         List<XMind> xmindList = xmind.getChildren().getAttached();
         XMindStep step = new XMindStep();
-        //bugfix 1： 清除XMind单元格中的异常字符 \r 和 \n
-        String title = Optional.ofNullable(xmind.getTitle()).orElse("");
-        builders.append(title.trim()).append("-");
+        builders.append(xmind.getTitle()).append("-");
         StringBuilder sb = new StringBuilder();
         boolean flag = true;
         for (XMind var: xmindList){
@@ -35,14 +33,14 @@ public class AnalysisCore {
                 sb.append(var.getTitle());
                 sb.append(System.getProperty("line.separator")); // 优化：预期结果换行
                 if (flag){
-                    builders.replace(builders.length() - (Optional.ofNullable(xmind.getTitle()).orElse("").length() + 1), builders.length(),"");
+                    builders.replace(builders.length() - (xmind.getTitle().length() + 1), builders.length(),"");
                     flag = false;
                 }
             }
         }
         if (!sb.toString().isEmpty()){
             steps.add(step);
-            step.setStep(Optional.ofNullable(xmind.getTitle()).orElse(""));
+            step.setStep(xmind.getTitle());
             step.setExpectedResult(sb.toString());
             try {
                 step.setTitle(builders.substring(0, builders.length()-1));
@@ -51,9 +49,9 @@ public class AnalysisCore {
             }
         }else {
             // 值得比较的内容-优化：只对用例标题内容进行比较
-            if (builders.length() > Optional.ofNullable(xmind.getTitle()).orElse("").length()
-                    && Optional.ofNullable(xmind.getTitle()).orElse("").equals(builders.substring(builders.length() - (Optional.ofNullable(xmind.getTitle()).orElse("").length() + 1), builders.length()-1))){
-                builders.replace(builders.length() - (Optional.ofNullable(xmind.getTitle()).orElse("").length() + 1), builders.length(),"");
+            if (builders.length() > xmind.getTitle().length()
+                    && xmind.getTitle().equals(builders.substring(builders.length() - (xmind.getTitle().length() + 1), builders.length()-1))){
+                builders.replace(builders.length() - (xmind.getTitle().length() + 1), builders.length(),"");
             }
         }
 
