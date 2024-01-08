@@ -296,7 +296,7 @@ public class XMindAnalysis {
     /**
      * 进一步优化，获取步骤后先获取title再循环：
      * @param xmind XMind 起始对象程序解析的数据源
-     * @param steps XMind 步骤集合，程序存储的结果极氪
+     * @param steps XMind 步骤集合，程序存储的结果
      * @param builders 用于步骤间标题的传递
      * @return 将XMind转为以步骤为基准的记录
      * */
