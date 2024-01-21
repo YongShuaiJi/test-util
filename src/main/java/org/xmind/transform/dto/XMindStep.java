@@ -1,5 +1,6 @@
 package org.xmind.transform.dto;
 
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -14,6 +15,8 @@ import lombok.ToString;
 @ToString
 public class XMindStep {
     private int caseId;
+    // 目标程序中的用例标题字符数最大长度255
+    @Size(max = 255, message = "用例标题过长，超过255个字符")
     private String title;
     private String priority = "P1";
     private String label = "";

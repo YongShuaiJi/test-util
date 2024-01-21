@@ -3,7 +3,12 @@ package org.xmind.transform.execute;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
+import jakarta.validation.ValidatorFactory;
 import org.apache.commons.io.FileUtils;
+import org.hibernate.validator.internal.engine.ConstraintViolationImpl;
 import org.xmind.transform.config.baseConfig;
 import org.xmind.transform.enums.HierarchyState;
 import org.xmind.transform.dto.XMindStep;
@@ -27,6 +32,13 @@ import java.util.stream.Collectors;
 public class XMindToCSVExport<R, P> extends baseConfig implements XMindExportStrategy<XMindFile> {
 
     private AnalysisCore analysisCore = new AnalysisCore();
+    private static Validator validator;
+    static {
+        ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
+        validator = factory.getValidator();
+    }
+
+
 
     @Override
     public void execute(XMindFile xmindFile) {
@@ -51,6 +63,17 @@ public class XMindToCSVExport<R, P> extends baseConfig implements XMindExportStr
             resultSteps.addAll(xmindCanvasSteps);
         }
         String fileName = targetPath + xmindFile.getName();
+        // 校验对象
+        resultSteps.forEach(xMindStep -> {
+            Set<ConstraintViolation<XMindStep>> constraintViolations = validator.validate(xMindStep);
+            Iterator<ConstraintViolation<XMindStep>> iterator = constraintViolations.iterator();
+            while (iterator.hasNext()){
+                ConstraintViolation<XMindStep> constraintViolation = iterator.next();
+                throw new RuntimeException(constraintViolation.getMessage()
+                        + "，" + "用例标题：" +
+                        constraintViolation.getRootBean().getTitle());
+            }
+        });
         toFile(resultSteps, fileName);
     }
 
