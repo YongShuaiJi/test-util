@@ -8,7 +8,6 @@ import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
 import org.apache.commons.io.FileUtils;
-import org.hibernate.validator.internal.engine.ConstraintViolationImpl;
 import org.xmind.transform.config.baseConfig;
 import org.xmind.transform.enums.HierarchyState;
 import org.xmind.transform.dto.XMindStep;
@@ -37,8 +36,6 @@ public class XMindToCSVExport<R, P> extends baseConfig implements XMindExportStr
         ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
         validator = factory.getValidator();
     }
-
-
 
     @Override
     public void execute(XMindFile xmindFile) {
