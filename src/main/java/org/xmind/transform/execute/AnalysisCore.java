@@ -25,19 +25,16 @@ public class AnalysisCore {
         XMindStep step = new XMindStep();
         builders.append(xmind.getTitle()).append("-");
         StringBuilder sb = new StringBuilder();
-        boolean flag = true;
         for (XMind var: xmindList){
             if (var.getChildren() != null){
                 convertToBaseAction(var, steps, builders);
             }else {
                 sb.append(var.getTitle());
                 sb.append(System.getProperty("line.separator")); // 优化：预期结果换行
-                if (flag){
-                    builders.replace(builders.length() - (xmind.getTitle().length() + 1), builders.length(),"");
-                    flag = false;
-                }
             }
         }
+        // 优化：减少不必要的代码， 解决同一层级下，较少节点的分支删除标题的问题
+        builders.replace(builders.length() - (xmind.getTitle().length() + 1), builders.length(),"");
         if (!sb.toString().isEmpty()){
             steps.add(step);
             step.setStep(xmind.getTitle());
@@ -47,14 +44,7 @@ public class AnalysisCore {
             }catch (Exception e){
                 throw new RuntimeException("请检查每条记录的层级是否足够，每条记录至少要保证三个节点");
             }
-        }else {
-            // 值得比较的内容-优化：只对用例标题内容进行比较
-            if (builders.length() > xmind.getTitle().length()
-                    && xmind.getTitle().equals(builders.substring(builders.length() - (xmind.getTitle().length() + 1), builders.length()-1))){
-                builders.replace(builders.length() - (xmind.getTitle().length() + 1), builders.length(),"");
-            }
         }
-
         return steps;
     }
 
