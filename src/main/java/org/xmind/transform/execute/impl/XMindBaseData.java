@@ -1,44 +1,57 @@
-package org.xmind.transform.execute;
+package org.xmind.transform.execute.impl;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.Validation;
-import jakarta.validation.Validator;
-import jakarta.validation.ValidatorFactory;
-import org.apache.commons.io.FileUtils;
-import org.xmind.transform.config.baseConfig;
+import org.apache.commons.beanutils.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.xmind.transform.dto.*;
 import org.xmind.transform.enums.HierarchyState;
-import org.xmind.transform.dto.XMindStep;
 import org.xmind.transform.enums.Priority;
-import org.xmind.transform.enums.XrayCase;
-import org.xmind.transform.dto.XMind;
-import org.xmind.transform.dto.XMindFile;
-import org.xmind.transform.dto.XMindFrame;
+import org.xmind.transform.enums.XMindExportStrategyEnum;
+import org.xmind.transform.execute.AnalysisCore;
+import org.xmind.transform.execute.XMindExportStrategy;
 
-import java.io.File;
-import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.stream.Collectors;
-
 
 /**
  * @author jiyongshuai
  * @email jysnana@163.com
- * @Date 2023/3/22
+ * @Date 2023/03/31 00:39:14
  */
-public class XMindToCSVExport<R, P> extends baseConfig implements XMindExportStrategy<XMindFile> {
+public class XMindBaseData {
+    public String smokingFlag = "冒烟"; // 冒烟测试标识
+    public String xpathSeparator = "/"; // 目录之间连接符
+    public String targetPath = "./xfiles/target/"; // 结果写入路径
 
-    private AnalysisCore analysisCore = new AnalysisCore();
-    private static Validator validator;
-    static {
-        ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
-        validator = factory.getValidator();
-    }
+    @Autowired
+    private Export exportData;
 
-    @Override
-    public void execute(XMindFile xmindFile) {
+    @Autowired
+    private XMindFile xmindFile;
+
+    @Autowired
+    private AnalysisCore analysisCore;
+
+    protected <R, P , T extends XMindExportStrategy> Export getExportData(XMindFile sourceXMindFile, T t){
+        String suffix = XMindExportStrategyEnum.getSuffix(t);
+        if (suffix == null){
+            try {
+                throw new RuntimeException("执行的导出策略没有在XMindExportStrategyEnum中定义");
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+        try {
+            BeanUtils.copyProperties(xmindFile, sourceXMindFile);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        } catch (InvocationTargetException e) {
+            throw new RuntimeException(e);
+        }
+        xmindFile.setName(xmindFile.getName() + suffix);
         List<JSONObject> array = JSON.parseArray(xmindFile.getBody(), JSONObject.class);
         List<XMindStep> resultSteps = new ArrayList<>();
         for (JSONObject o: array){
@@ -60,18 +73,9 @@ public class XMindToCSVExport<R, P> extends baseConfig implements XMindExportStr
             resultSteps.addAll(xmindCanvasSteps);
         }
         String fileName = targetPath + xmindFile.getName();
-        // 校验对象
-        resultSteps.forEach(xMindStep -> {
-            Set<ConstraintViolation<XMindStep>> constraintViolations = validator.validate(xMindStep);
-            Iterator<ConstraintViolation<XMindStep>> iterator = constraintViolations.iterator();
-            while (iterator.hasNext()){
-                ConstraintViolation<XMindStep> constraintViolation = iterator.next();
-                throw new RuntimeException(constraintViolation.getMessage()
-                        + "，" + "用例标题：" +
-                        constraintViolation.getRootBean().getTitle());
-            }
-        });
-        toFile(resultSteps, fileName);
+        exportData.setFileName(fileName);
+        exportData.setResultSteps(resultSteps);
+        return exportData;
     }
 
     /**
@@ -137,26 +141,6 @@ public class XMindToCSVExport<R, P> extends baseConfig implements XMindExportStr
         });
         List<XMindStep> resultSteps = formatSteps.stream().sorted(Comparator.comparing(XMindStep::getCaseId)).collect(Collectors.toList());
         return resultSteps;
-    }
-
-    /**
-     * 将内容写入文件
-     * @param steps 数据源
-     * @param fileName 文件名称
-     * */
-    private void toFile(List<XMindStep> steps, String fileName){
-        String firstLine = XrayCase.getFormatNames() + System.getProperty("line.separator");
-        try {
-            FileUtils.writeStringToFile(new File(fileName), firstLine, "UTF-8");
-            FileUtils.writeLines(new File(fileName), steps,true);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        // 调试的代码
-//        System.out.print(firstLine);
-//        for (XMindStep s: steps){
-//            System.out.println(s);
-//        }
     }
 
 }

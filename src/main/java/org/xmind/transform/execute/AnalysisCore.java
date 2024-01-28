@@ -1,8 +1,12 @@
 package org.xmind.transform.execute;
 
+import org.apache.poi.xddf.usermodel.Angles;
+import org.springframework.stereotype.Component;
 import org.xmind.transform.dto.XMind;
 import org.xmind.transform.dto.XMindStep;
 
+import javax.inject.Inject;
+import javax.inject.Named;
 import java.util.List;
 import java.util.Optional;
 
@@ -11,6 +15,9 @@ import java.util.Optional;
  * @email jysnana@163.com
  * @Date 2023/3/22
  */
+
+
+@Component
 public class AnalysisCore {
 
     /**

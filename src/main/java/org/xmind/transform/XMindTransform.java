@@ -1,9 +1,12 @@
 package org.xmind.transform;
 
 import org.apache.commons.io.IOUtils;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.xmind.transform.config.ObjectConfig;
 import org.xmind.transform.dto.XMindFile;
-import org.xmind.transform.execute.XMindExportStrategy;
-import org.xmind.transform.execute.XMindToCSVExport;
+import org.xmind.transform.execute.impl.XMindToCSVExport;
+import org.xmind.transform.execute.impl.XMindToExcelExport;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -19,12 +22,11 @@ import java.util.zip.ZipFile;
  * @createDate 2023/3/22
  * */
 public class XMindTransform {
+
     public static List<XMindFile> xmindJSONToStringList = new ArrayList<>();
     private static final String sourceFileName = "content.json"; // 标准的XMind内容文件
-    private static Map<String, XMindExportStrategy> xmindExportStrategyMap = new HashMap<>();
 
     static {
-        xmindExportStrategyMap.put("csv", new XMindToCSVExport());
         // (*^▽^*)
         File[] xmindFileSourceList = new File("./xfiles/source").listFiles((dir, name) -> name.endsWith(".xmind"));
         for (File xmindFileSource : xmindFileSourceList){
@@ -35,7 +37,6 @@ public class XMindTransform {
             for (String s : fileNames){
                 fileName.append(s).append(".");
             }
-            fileName.append("csv");
             String xmindJSONToString = "";
             try {
                 ZipFile zipFile = new ZipFile(xmindFileSource);
@@ -65,8 +66,20 @@ public class XMindTransform {
     }
 
     public static void main(String[] args) {
+        ApplicationContext context = new AnnotationConfigApplicationContext(ObjectConfig.class);
+        String strategy = "all";
         for (XMindFile xmindFile : xmindJSONToStringList){
-            xmindExportStrategyMap.get("csv").execute(xmindFile);
+            switch (strategy){
+                case "csv":
+                    context.getBean(XMindToCSVExport.class).execute(xmindFile);
+                    break;
+                case "excel":
+                    context.getBean(XMindToExcelExport.class).execute(xmindFile);
+                    break;
+                default:
+                    context.getBean(XMindToCSVExport.class).execute(xmindFile);
+                    context.getBean(XMindToExcelExport.class).execute(xmindFile);
+            }
         }
 
     }
