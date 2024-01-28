@@ -63,11 +63,6 @@ public class XMindToCSVExport extends XMindBaseData implements XMindExportStrate
         } catch (IOException e) {
             e.printStackTrace();
         }
-        // 调试的代码
-//        System.out.print(firstLine);
-//        for (XMindStep s: steps){
-//            System.out.println(s);
-//        }
     }
 
 }

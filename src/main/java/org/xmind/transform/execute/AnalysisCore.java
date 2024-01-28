@@ -33,9 +33,11 @@ public class AnalysisCore {
         builders.append(xmind.getTitle()).append("-");
         StringBuilder sb = new StringBuilder();
         for (XMind var: xmindList){
+            // 一直递归到当前节点没有子节为止
             if (var.getChildren() != null){
                 convertToBaseAction(var, steps, builders);
             }else {
+                // 预期结果赋值
                 sb.append(var.getTitle());
                 sb.append(System.getProperty("line.separator")); // 优化：预期结果换行
             }
@@ -45,7 +47,7 @@ public class AnalysisCore {
         if (!sb.toString().isEmpty()){
             steps.add(step);
             step.setStep(xmind.getTitle());
-            step.setExpectedResult(sb.toString());
+            step.setExpectedResult(sb.toString().trim());
             try {
                 step.setTitle(builders.substring(0, builders.length()-1));
             }catch (Exception e){
@@ -54,5 +56,4 @@ public class AnalysisCore {
         }
         return steps;
     }
-
 }
