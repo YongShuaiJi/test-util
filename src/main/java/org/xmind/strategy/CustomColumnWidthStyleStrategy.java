@@ -10,9 +10,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Sheet;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author jiyongshuai
@@ -48,6 +46,7 @@ public class CustomColumnWidthStyleStrategy extends AbstractColumnWidthStyleStra
                     columnWidth = 60;
                 }
                 Integer maxColumnWidth = maxColumnWidthMap.get(cell.getColumnIndex());
+                // 兼容最大单元格
                 if (maxColumnWidth == null || columnWidth > maxColumnWidth) {
                     maxColumnWidthMap.put(cell.getColumnIndex(), columnWidth);
                     Sheet sheet = writeSheetHolder.getSheet();
@@ -69,10 +68,16 @@ public class CustomColumnWidthStyleStrategy extends AbstractColumnWidthStyleStra
             } else {
                 switch (type) {
                     case STRING:
-                        // 换行符（数据需要提前解析好）
+                        // 换行符
                         int index = cellData.getStringValue().indexOf("\n");
                         return index != -1 ?
-                                cellData.getStringValue().substring(0, index).getBytes().length + 1 : cellData.getStringValue().getBytes().length + 1;
+                                Arrays.stream(cellData.getStringValue().split("\n"))
+                                        .map(o->o.trim()) // 优化处理 \r\n 的场景
+                                        .sorted(Comparator.comparing(String::length).reversed()) // 将最长的放到最上面
+                                        .findFirst()
+                                        .get()
+                                        .getBytes().length
+                                : cellData.getStringValue().getBytes().length;
                     case BOOLEAN:
                         return cellData.getBooleanValue().toString().getBytes().length;
                     case NUMBER:

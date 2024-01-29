@@ -7,6 +7,5 @@ package org.xmind.transform.execute;
  */
 @FunctionalInterface
 public interface XMindExportStrategy<E> {
-
     void execute(E e);
 }
