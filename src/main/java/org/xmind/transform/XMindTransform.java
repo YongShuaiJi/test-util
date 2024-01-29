@@ -1,10 +1,13 @@
 package org.xmind.transform;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.xmind.transform.config.ObjectConfig;
 import org.xmind.transform.dto.XMindFile;
+import org.xmind.transform.enums.XMindExportStrategyEnum;
+import org.xmind.transform.execute.XMindExportStrategy;
 import org.xmind.transform.execute.impl.XMindToCSVExport;
 import org.xmind.transform.execute.impl.XMindToExcelExport;
 
@@ -21,12 +24,14 @@ import java.util.zip.ZipFile;
  * @email jysnana@163.com
  * @createDate 2023/3/22
  * */
+@Slf4j
 public class XMindTransform {
 
     public static List<XMindFile> xmindJSONToStringList = new ArrayList<>();
     private static final String sourceFileName = "content.json"; // 标准的XMind内容文件
 
     static {
+        log.info("开始加载资源目录下XMind文件数据");
         // (*^▽^*)
         File[] xmindFileSourceList = new File("./xfiles/source").listFiles((dir, name) -> name.endsWith(".xmind"));
         for (File xmindFileSource : xmindFileSourceList){
@@ -62,25 +67,20 @@ public class XMindTransform {
             xfile.setName(fileName.toString());
             xmindJSONToStringList.add(xfile);
         }
+        log.info("已加载资源目录下全部的XMind文件数据");
 
     }
 
     public static void main(String[] args) {
         ApplicationContext context = new AnnotationConfigApplicationContext(ObjectConfig.class);
-        String strategy = "all";
+        XMindExportStrategyEnum strategyEnum = XMindExportStrategyEnum.excel;
+        log.info("开始执行XMind转换...");
         for (XMindFile xmindFile : xmindJSONToStringList){
-            switch (strategy){
-                case "csv":
-                    context.getBean(XMindToCSVExport.class).execute(xmindFile);
-                    break;
-                case "excel":
-                    context.getBean(XMindToExcelExport.class).execute(xmindFile);
-                    break;
-                default:
-                    context.getBean(XMindToCSVExport.class).execute(xmindFile);
-                    context.getBean(XMindToExcelExport.class).execute(xmindFile);
-            }
-        }
+            XMindExportStrategy<XMindFile> exec = context.getBean(strategyEnum.getStrategy().getClass());
+            log.info("开始转换文件:{}", xmindFile.getName());
+            exec.execute(xmindFile);
+            log.info("已转换完成转换文件:{}", xmindFile.getName());
 
+        }
     }
 }
