@@ -62,8 +62,10 @@ public class XMindBaseData {
             // 修剪一下用例标题-美观需求:去除用例标题中的主标题
             stepList.forEach(step -> {
                 String  title = step.getTitle();
-                if (title != null && title.length() >=title.length() && title.substring(0, topicTitle.length()).equals(topicTitle) && !title.equals(topicTitle)){
-                    title = title.substring(topicTitle.length()+1, title.length());
+                if (title != null
+                        && title.substring(0, topicTitle.length()).equals(topicTitle)
+                        && !title.equals(topicTitle)){
+                    title = title.substring(topicTitle.length() + 1, title.length());
                 }
                 step.setTitle(title);
             });

@@ -1,20 +1,13 @@
 package org.xmind.transform.execute.impl;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
-import com.alibaba.fastjson.TypeReference;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
 import org.apache.commons.io.FileUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.xmind.transform.dto.*;
-import org.xmind.transform.enums.HierarchyState;
-import org.xmind.transform.enums.Priority;
 import org.xmind.transform.enums.XrayCase;
-import org.xmind.transform.execute.AnalysisCore;
 import org.xmind.transform.execute.XMindExportStrategy;
 
 import java.io.File;
