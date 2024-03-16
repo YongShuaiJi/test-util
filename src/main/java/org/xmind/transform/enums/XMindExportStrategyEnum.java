@@ -16,9 +16,9 @@ public enum XMindExportStrategyEnum {
     csv(0, "csv", new XMindToCSVExport()),
     excel(1, "xlsx", new XMindToExcelExport());
 
-    private Integer index;
-    private String suffix;
-    private XMindExportStrategy strategy;
+    private final Integer index;
+    private final String suffix;
+    private final XMindExportStrategy strategy;
 
     public Integer getIndex() {
         return index;

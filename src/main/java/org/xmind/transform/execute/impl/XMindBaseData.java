@@ -3,6 +3,7 @@ package org.xmind.transform.execute.impl;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.xmind.transform.dto.*;
@@ -21,6 +22,7 @@ import java.util.stream.Collectors;
  * @email jysnana@163.com
  * @Date 2023/03/31 00:39:14
  */
+@Slf4j
 public class XMindBaseData {
     public String smokingFlag = "冒烟"; // 冒烟测试标识
     public String xpathSeparator = "/"; // 目录之间连接符
@@ -38,15 +40,13 @@ public class XMindBaseData {
     protected <R, P , T extends XMindExportStrategy> Export getExportData(XMindFile sourceXMindFile, T t){
         String suffix = XMindExportStrategyEnum.getSuffix(t);
         if (suffix == null){
-            try {
-                throw new RuntimeException("执行的导出策略没有在XMindExportStrategyEnum中定义");
-            }catch (Exception e){
-                e.printStackTrace();
-            }
+            log.error("执行的导出策略没有在XMindExportStrategyEnum中定义");
+            throw new RuntimeException();
         }
         try {
             BeanUtils.copyProperties(xmindFile, sourceXMindFile);
         } catch (IllegalAccessException e) {
+            log.error("由反射权限引起的异常:{}", e.getMessage());
             throw new RuntimeException(e);
         } catch (InvocationTargetException e) {
             throw new RuntimeException(e);
@@ -54,6 +54,7 @@ public class XMindBaseData {
         xmindFile.setName(xmindFile.getName() + suffix);
         List<JSONObject> array = JSON.parseArray(xmindFile.getBody(), JSONObject.class);
         List<XMindStep> resultSteps = new ArrayList<>();
+        // 区分不同的画布中的用例， 有多个画布就会有多种逻辑排序
         for (JSONObject o: array){
             XMindFrame<XMind, R, P> xmindFrame = JSON.parseObject(o.toString(), new TypeReference<XMindFrame<XMind, R, P>>(){});
             XMind xmind = xmindFrame.getRootTopic();
@@ -63,9 +64,9 @@ public class XMindBaseData {
             stepList.forEach(step -> {
                 String  title = step.getTitle();
                 if (title != null
-                        && title.substring(0, topicTitle.length()).equals(topicTitle)
+                        && title.startsWith(topicTitle)
                         && !title.equals(topicTitle)){
-                    title = title.substring(topicTitle.length() + 1, title.length());
+                    title = title.substring(topicTitle.length() + 1);
                 }
                 step.setTitle(title);
             });
@@ -88,22 +89,22 @@ public class XMindBaseData {
      * */
     private List<XMindStep> handleXmindSteps(List<XMindStep> stepList, String topicTitle, int hierarchy){
         Map<String, List<XMindStep>> mapStep = stepList.stream().collect(Collectors.groupingBy(XMindStep::getTitle));
-        TreeMap stepSortMap = new TreeMap(mapStep);
+        TreeMap<String, List<XMindStep>> stepSortMap = new TreeMap<>(mapStep);
         Iterator<Map.Entry<String, List<XMindStep>>> stepIterator = stepSortMap.entrySet().iterator();
         // setCaseId
-        int tmepNum = 0;
+        int tempNum = 0;
         while (stepIterator.hasNext()){
-            tmepNum+=1;
+            tempNum+=1;
             Map.Entry<String, List<XMindStep>> next = stepIterator.next();
             for (XMindStep xmindStep : next.getValue()){
-                xmindStep.setCaseId(tmepNum);
+                xmindStep.setCaseId(tempNum);
             }
         }
         // 格式化用例步骤 提供业务需要的用例格式
         List<XMindStep> formatSteps = new ArrayList<>();
         mapStep.values().forEach(steps -> {
-            steps.forEach(stept->{
-                String[] titles = stept.getTitle().split("-");
+            steps.forEach(step->{
+                String[] titles = step.getTitle().split("-");
                 if (titles.length < hierarchy){
                     try {
                         throw new Exception();
@@ -117,32 +118,31 @@ public class XMindBaseData {
                 }
                 String resultPath = s.toString();
                 // 通过冒烟标识确定冒烟用例
-                if (stept.getTitle().contains(smokingFlag)){
-                    stept.setPriority("P0");
+                if (step.getTitle().contains(smokingFlag)){
+                    step.setPriority("P0");
                 }
                 // 识别用例优先级
                 for (String priorityKey : Priority.getKeys()){
-                    if (stept.getTitle().contains(priorityKey)){
-                        stept.setTitle(stept.getTitle().replace(priorityKey, ""));
-                        stept.setPriority(priorityKey);
+                    if (step.getTitle().contains(priorityKey)){
+                        step.setTitle(step.getTitle().replace(priorityKey, ""));
+                        step.setPriority(priorityKey);
                     }
                 }
                 // 去除因为空元素块带来的 -
-                String[] target = stept.getTitle().split("-");
-                String targe = "";
+                String[] target = step.getTitle().split("-");
+                StringBuilder sugarTitle = new StringBuilder();
                 for (String title : target){
                     if (!title.isEmpty()){
-                        targe = targe + title + '-';
+                        sugarTitle.append(title).append('-');
                     }
                 }
-                targe = targe.substring(0, targe.length()-1);
-                stept.setTitle(targe);
-                stept.setPath(resultPath);
-                formatSteps.add(stept);
+                sugarTitle = new StringBuilder(sugarTitle.substring(0, sugarTitle.length() - 1));
+                step.setTitle(sugarTitle.toString());
+                step.setPath(resultPath);
+                formatSteps.add(step);
             });
         });
-        List<XMindStep> resultSteps = formatSteps.stream().sorted(Comparator.comparing(XMindStep::getCaseId)).collect(Collectors.toList());
-        return resultSteps;
+        return formatSteps.stream().sorted(Comparator.comparing(XMindStep::getCaseId)).collect(Collectors.toList());
     }
 
 }

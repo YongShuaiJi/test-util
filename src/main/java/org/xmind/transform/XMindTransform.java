@@ -12,7 +12,11 @@ import org.xmind.transform.execute.XMindExportStrategy;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Enumeration;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -32,40 +36,45 @@ public class XMindTransform {
         log.info("开始加载资源目录下XMind文件数据");
         // (*^▽^*)
         File[] xmindFileSourceList = new File("./xfiles/source").listFiles((dir, name) -> name.endsWith(".xmind"));
-        for (File xmindFileSource : xmindFileSourceList){
-            XMindFile xfile = new XMindFile();
-            String[] fileNames = xmindFileSource.getName().split("\\.");
-            fileNames = Arrays.copyOf(fileNames, fileNames.length-1);
-            StringBuilder fileName = new StringBuilder();
-            for (String s : fileNames){
-                fileName.append(s).append(".");
-            }
-            String xmindJSONToString = "";
-            try {
-                ZipFile zipFile = new ZipFile(xmindFileSource);
-                Enumeration<?> entries = zipFile.entries();
-                while (entries.hasMoreElements()){
-                    ZipEntry entry = (ZipEntry) entries.nextElement();
-                    if (entry.getName().equals(sourceFileName)){
-                        xmindJSONToString = IOUtils.toString(new BufferedInputStream(zipFile.getInputStream(entry)),"UTF-8");
+        if (xmindFileSourceList != null) {
+            for (File xmindFileSource : xmindFileSourceList){
+                XMindFile xfile = new XMindFile();
+                String[] fileNames = xmindFileSource.getName().split("\\.");
+                fileNames = Arrays.copyOf(fileNames, fileNames.length-1);
+                StringBuilder fileName = new StringBuilder();
+                for (String s : fileNames){
+                    fileName.append(s).append(".");
+                }
+                String xmindJSONToString = "";
+                try {
+                    try (ZipFile zipFile = new ZipFile(xmindFileSource)) {
+                        Enumeration<?> entries = zipFile.entries();
+                        while (entries.hasMoreElements()) {
+                            ZipEntry entry = (ZipEntry) entries.nextElement();
+                            if (entry.getName().equals(sourceFileName)) {
+                                xmindJSONToString = IOUtils.toString(new BufferedInputStream(zipFile.getInputStream(entry)), StandardCharsets.UTF_8);
+                            }
+                        }
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace(System.out.append("解压出现问题请检查Xmind文件"));
+                }
+
+                if (xmindJSONToString.isEmpty()){
+                    try {
+                        throw new Exception();
+                    } catch (Exception e) {
+                        e.printStackTrace(System.out.append("请检查Xmind文件解压出的JSON文件结果"));
                     }
                 }
-            } catch (IOException e) {
-                e.printStackTrace(System.out.append("解压出现问题请检查Xmind文件"));
+                xfile.setBody(xmindJSONToString);
+                xfile.setName(fileName.toString());
+                xmindJSONToStringList.add(xfile);
             }
-
-            if (!(xmindJSONToString.length() > 0)){
-                try {
-                    throw new Exception();
-                } catch (Exception e) {
-                    e.printStackTrace(System.out.append("请检查Xmind文件解压出的JSON文件结果"));
-                }
-            }
-            xfile.setBody(xmindJSONToString);
-            xfile.setName(fileName.toString());
-            xmindJSONToStringList.add(xfile);
+            log.info("已加载资源目录下全部的XMind文件数据");
+        }else {
+            log.warn("资源目录下没有XMind文件...");
         }
-        log.info("已加载资源目录下全部的XMind文件数据");
 
     }
 
@@ -74,11 +83,11 @@ public class XMindTransform {
         XMindExportStrategyEnum strategyEnum = XMindExportStrategyEnum.excel;
         log.info("开始执行XMind转换...");
         for (XMindFile xmindFile : xmindJSONToStringList){
-            XMindExportStrategy<XMindFile> exec = context.getBean(strategyEnum.getStrategy().getClass());
+            XMindExportStrategy exec = context.getBean(strategyEnum.getStrategy().getClass());
             log.info("开始转换文件:{}", xmindFile.getName());
             exec.execute(xmindFile);
             log.info("已转换完成转换文件:{}", xmindFile.getName());
-
         }
+        log.info("XMind转换完成");
     }
 }

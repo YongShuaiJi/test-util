@@ -1,6 +1,5 @@
 package org.xmind.strategy;
 
-import com.alibaba.excel.metadata.Head;
 import com.alibaba.excel.write.handler.context.CellWriteHandlerContext;
 import com.alibaba.excel.write.metadata.style.WriteCellStyle;
 import com.alibaba.excel.write.style.AbstractVerticalCellStyleStrategy;
@@ -18,7 +17,7 @@ public class CustomColumnCellStyleStrategy extends AbstractVerticalCellStyleStra
      * Returns the column width corresponding to each column head.
      *
      * @param context
-     * @return
+     * @return WriteCellStyle
      */
     @Override
     protected WriteCellStyle contentCellStyle(CellWriteHandlerContext context) {

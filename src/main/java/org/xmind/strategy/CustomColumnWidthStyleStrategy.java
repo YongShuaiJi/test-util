@@ -57,6 +57,7 @@ public class CustomColumnWidthStyleStrategy extends AbstractColumnWidthStyleStra
     }
 
 
+    @SuppressWarnings("OptionalGetWithoutIsPresent")
     private Integer dataLength(List<WriteCellData<?>> cellDataList, Cell cell, Boolean isHead) {
         if (isHead) {
             return cell.getStringCellValue().getBytes().length;
@@ -70,13 +71,15 @@ public class CustomColumnWidthStyleStrategy extends AbstractColumnWidthStyleStra
                     case STRING:
                         // 换行符
                         int index = cellData.getStringValue().indexOf("\n");
+                        // 优化处理 \r\n 的场景
+                        // 将最长的放到最上面
                         return index != -1 ?
                                 Arrays.stream(cellData.getStringValue().split("\n"))
-                                        .map(o->o.trim()) // 优化处理 \r\n 的场景
-                                        .sorted(Comparator.comparing(String::length).reversed()) // 将最长的放到最上面
-                                        .findFirst()
+                                        .map(o -> o.trim()) // 优化处理 \r\n 的场景
+                                        .max(Comparator.comparing(String::length)) // 将最长的放到最上面
                                         .get()
-                                        .getBytes().length
+                                        .getBytes()
+                                        .length
                                 : cellData.getStringValue().getBytes().length;
                     case BOOLEAN:
                         return cellData.getBooleanValue().toString().getBytes().length;

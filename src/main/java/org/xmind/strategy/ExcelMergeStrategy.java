@@ -22,10 +22,10 @@ import java.util.List;
 public class ExcelMergeStrategy implements CellWriteHandler {
 
     // 从第几行开始合并
-    private int mergeRowIndex;
+    private final int mergeRowIndex;
 
     // 合并列的范围，合并哪些列
-    private int[] mergeColumnIndex;
+    private final int[] mergeColumnIndex;
 
     public ExcelMergeStrategy(int mergeRowIndex, int[] mergeColumnIndex){
         this.mergeRowIndex = mergeRowIndex;
@@ -44,8 +44,8 @@ public class ExcelMergeStrategy implements CellWriteHandler {
         // 行的开始逻辑，之前的行合并不考虑
         if(rowIndex > mergeRowIndex){
             // 遍历需要合并的列
-            for (int i = 0; i < mergeColumnIndex.length; i++){
-                if (columnIndex == mergeColumnIndex[i]){
+            for (int index : mergeColumnIndex) {
+                if (columnIndex == index) {
                     // 找到需要合并的列
                     mergeWithPrevRow(writeSheetHolder, cell, rowIndex, columnIndex);
                     break;

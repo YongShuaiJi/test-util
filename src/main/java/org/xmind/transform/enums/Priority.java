@@ -16,7 +16,7 @@ public enum Priority {
     P3("P3"),
     P4("P4");
 
-    private String key;
+    private final String key;
 
     Priority(String key) {
         this.key = key;

@@ -14,8 +14,8 @@ public enum XrayCase {
     ACTION("操作","Action"),
     EXPECTED("预期","Expected Result"),
     CUSTOMFIEID10411("目录","customfield_10411");
-    private String name;
-    private String flag;
+    private final String name;
+    private final String flag;
     XrayCase(String name, String flag) {
         this.name = name;
         this.flag = flag;

@@ -7,7 +7,7 @@ package org.xmind.transform.exception;
 public class WorkException extends RuntimeException {
     private static final long serialVersionUID = -9133032757611866784L;
 
-    private String code;
+    private final String code;
 
     public WorkException(String code, String message){
         super(message);

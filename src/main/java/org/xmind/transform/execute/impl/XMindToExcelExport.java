@@ -21,7 +21,7 @@ import java.util.List;
  * @Date 2024-01-28 11:13:41
  */
 @Component
-public class XMindToExcelExport extends XMindBaseData implements XMindExportStrategy<XMindFile> {
+public class XMindToExcelExport extends XMindBaseData implements XMindExportStrategy {
     @Override
     public void execute(XMindFile xmindFile) {
         Export export = getExportData(xmindFile, this);

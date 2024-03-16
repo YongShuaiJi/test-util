@@ -22,9 +22,9 @@ public enum HierarchyState {
     SEVEN(7,"seven"),
     DEFAULT(2,"default");
 
-    private int code;
+    private final int code;
 
-    private String name;
+    private final String name;
 
     HierarchyState(int code, String name){
         this.code = code;

@@ -1,14 +1,10 @@
 package org.xmind.transform.execute;
 
-import org.apache.poi.xddf.usermodel.Angles;
 import org.springframework.stereotype.Component;
 import org.xmind.transform.dto.XMind;
 import org.xmind.transform.dto.XMindStep;
 
-import javax.inject.Inject;
-import javax.inject.Named;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * @author jiyongshuai
@@ -39,7 +35,7 @@ public class AnalysisCore {
             }else {
                 // 预期结果赋值
                 sb.append(var.getTitle());
-                sb.append(System.getProperty("line.separator")); // 优化：预期结果换行
+                sb.append(System.lineSeparator()); // 优化：预期结果换行
             }
         }
         // 优化：减少不必要的代码， 解决同一层级下，较少节点的分支删除标题的问题

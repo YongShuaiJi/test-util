@@ -20,6 +20,7 @@ public class ContinuousString {
      * 双重FOR循环，从前往后走，从后往前遍历
      * 核心：框出目标范围
      * */
+    @SuppressWarnings("OptionalGetWithoutIsPresent")
     public static void main(String[] args) {
         String s = "abcccccsdfioqccabc";
         String[] target = s.split("");
@@ -44,7 +45,7 @@ public class ContinuousString {
         storage.add(transformable.toString());
         System.out.println(storage);
         // (*^▽^*) 获取最长不重复连续字符串，可能有多个
-        List result = storage.stream().sorted(Comparator.comparing(String::length)).collect(Collectors.groupingBy(String::length)).
+        List<String> result = storage.stream().sorted(Comparator.comparing(String::length)).collect(Collectors.groupingBy(String::length)).
                 get(storage.stream().max(Comparator.comparingInt(String::length)).get().length());
         System.out.println(result);
 //        Map<Integer, List<String>> map = storage.stream().sorted(Comparator.comparing(String::length)).collect(Collectors.groupingBy(String::length));
